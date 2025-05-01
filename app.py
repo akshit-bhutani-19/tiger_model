@@ -66,14 +66,17 @@ def predict():
         # Upload results to S3
         full_out_dir = os.path.join("runs/detect", os.path.basename(output_dir))
         uploaded_files = []
+        labels_dir = os.path.join(full_out_dir, "labels")
         detection_found = False
 
         for f in os.listdir(full_out_dir):
-            if f.endswith(".txt"):
-                txt_path = os.path.join(full_out_dir, f)
-                if os.path.getsize(txt_path) > 0:
-                    detection_found = True
-                    break  # no need to check more
+            if os.path.exists(labels_dir):
+                for f in os.listdir(labels_dir):
+                    if f.endswith(".txt"):
+                        txt_path = os.path.join(labels_dir, f)
+                        if os.path.getsize(txt_path) > 0:
+                            detection_found = True
+                            break
 
         if detection_found:
             print("Detection found ✅ Uploading results to S3.")
