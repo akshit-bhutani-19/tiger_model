@@ -66,13 +66,25 @@ def predict():
         # Upload results to S3
         full_out_dir = os.path.join("runs/detect", os.path.basename(output_dir))
         uploaded_files = []
+        detection_found = False
 
         for f in os.listdir(full_out_dir):
-            if f.endswith((".jpg", ".txt")):
-                local_file = os.path.join(full_out_dir, f)
-                s3_key = f"{os.path.splitext(key)[0]}_output/{f}"
-                s3.upload_file(local_file, OUTPUT_BUCKET, s3_key)
-                uploaded_files.append(f"s3://{OUTPUT_BUCKET}/{s3_key}")
+            if f.endswith(".txt"):
+                txt_path = os.path.join(full_out_dir, f)
+                if os.path.getsize(txt_path) > 0:
+                    detection_found = True
+                    break  # no need to check more
+
+        if detection_found:
+            print("Detection found ✅ Uploading results to S3.")
+            for f in os.listdir(full_out_dir):
+                if f.endswith((".jpg", ".txt")):
+                    local_file = os.path.join(full_out_dir, f)
+                    s3_key = f"tiger/{f}"
+                    s3.upload_file(local_file, OUTPUT_BUCKET, s3_key)
+                    uploaded_files.append(f"s3://{OUTPUT_BUCKET}/{s3_key}")
+        else:
+            print("No detections found ❌ Skipping upload.")
 
         if os.path.exists(input_path):
             os.remove(input_path)
